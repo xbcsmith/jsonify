@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 // valsCmd represents the vals command
@@ -32,8 +31,6 @@ var valsCmd = &cobra.Command{
 }
 
 func getVals(cmd *cobra.Command, args []string) {
-
-	fmt.Println("PrintArgs: " + strings.Join(args, " "))
 
 	raw, err := ioutil.ReadAll(os.Stdin)
 

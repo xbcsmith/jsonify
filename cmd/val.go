@@ -15,13 +15,14 @@
 package cmd
 
 import (
-	//"encoding/json"
+	"encoding/json"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
-	//"io/ioutil"
-	//"os"
-	"strings"
+	"io/ioutil"
+	"os"
+	"reflect"
+	//"strings"
 )
 
 // valCmd represents the val command
@@ -34,34 +35,33 @@ var valCmd = &cobra.Command{
 
 func getVal(cmd *cobra.Command, args []string) {
 
-	fmt.Println("PrintArgs: " + strings.Join(args, " "))
+	raw, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 
-	spew.Dump(args)
-	/*
-	   raw, err := ioutil.ReadAll(os.Stdin)
-	   if err != nil {
-	       fmt.Println(err)
-	       os.Exit(-1)
-	   }
+	var data interface{}
 
-	   var data interface{}
+	err = json.Unmarshal([]byte(raw), &data)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 
-	   err = json.Unmarshal(raw, &data)
-	   if err != nil {
-	       fmt.Println(err)
-	       os.Exit(-1)
-	   }
+	m := data.(map[string]interface{})
 
-	   m := data.(map[string]interface{})
+	for k, v := range m {
+		spew.Dump(v)
+		fmt.Printf("key:%v  value:%v  kind:%s  type:%s\n",
+			k, v, reflect.TypeOf(v).Kind(), reflect.TypeOf(v))
+		/*if InSlice(v, args) {
+			fmt.Println(k)
+		}*/
+	}
 
-	   for k, v := range m {
-	       if _, ok := args[v]; ok {
-	           fmt.Println(k)
-	       }
-	   }
+	os.Exit(0)
 
-	   os.Exit(0)
-	*/
 }
 
 func init() {

@@ -15,13 +15,13 @@
 package cmd
 
 import (
-	//"encoding/json"
+	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
-	//"io/ioutil"
-	//"os"
-	"strings"
+	"io/ioutil"
+	"os"
+	//"strings"
 )
 
 // keyCmd represents the key command
@@ -34,34 +34,30 @@ var keyCmd = &cobra.Command{
 
 func getKey(cmd *cobra.Command, args []string) {
 
-	fmt.Println("PrintArgs: " + strings.Join(args, " "))
+	raw, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 
-	spew.Dump(args)
-	/*
-		raw, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
+	var data interface{}
+
+	err = json.Unmarshal(raw, &data)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+
+	m := data.(map[string]interface{})
+
+	for k, v := range m {
+		if InSlice(k, args) {
+			fmt.Println(v)
 		}
+	}
 
-		var data interface{}
+	os.Exit(0)
 
-		err = json.Unmarshal(raw, &data)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(-1)
-		}
-
-		m := data.(map[string]interface{})
-
-		for k, v := range m {
-			if _, ok := args[k]; ok {
-				fmt.Println(v)
-			}
-		}
-
-		os.Exit(0)
-	*/
 }
 
 func init() {

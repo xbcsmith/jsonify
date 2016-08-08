@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
-	"strings"
 )
 
 // keysCmd represents the keys command
@@ -32,8 +31,6 @@ var keysCmd = &cobra.Command{
 }
 
 func getKeys(cmd *cobra.Command, args []string) {
-
-	fmt.Println("PrintArgs: " + strings.Join(args, " "))
 
 	raw, err := ioutil.ReadAll(os.Stdin)
 
@@ -55,6 +52,7 @@ func getKeys(cmd *cobra.Command, args []string) {
 	for k, _ := range m {
 		fmt.Println(k)
 	}
+
 	os.Exit(0)
 }
 
