@@ -50,7 +50,18 @@ func getVals(cmd *cobra.Command, args []string) {
 	m := data.(map[string]interface{})
 
 	for _, v := range m {
-		fmt.Println(v)
+		switch val := v.(type) {
+            case string:
+			    fmt.Println(v)
+		    case int:
+			    fmt.Println(v)
+		    case []interface{}:
+			    for i, u := range v {
+				    fmt.Println(u)
+			    }
+		    default:
+			    fmt.Println(v, "is of a type I don't know how to handle")
+		}
 	}
 	os.Exit(0)
 }

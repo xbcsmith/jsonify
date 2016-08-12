@@ -21,8 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
-	"reflect"
-	//"strings"
 )
 
 // valCmd represents the val command
@@ -49,17 +47,30 @@ func getVal(cmd *cobra.Command, args []string) {
 		os.Exit(-1)
 	}
 
+    fmt.Println("VAL MODULE")
+
 	m := data.(map[string]interface{})
 
 	for k, v := range m {
-		spew.Dump(v)
-		fmt.Printf("key:%v  value:%v  kind:%s  type:%s\n",
-			k, v, reflect.TypeOf(v).Kind(), reflect.TypeOf(v))
-		/*if InSlice(v, args) {
-			fmt.Println(k)
-		}*/
+        switch val := v.(type) {
+            case string:
+				if InSlice(v, args) {
+					fmt.Println(k)
+				}
+            case int:
+				if InSlice(v, args) {
+					fmt.Println(k)
+				}
+            case []interface{}:
+                for i, u := range v {
+					if InSlice(i, args) {
+						fmt.Println(i)
+					}
+            }
+            default:
+                fmt.Println(val, "is of a type I don't know how to handle")
+            }
 	}
-
 	os.Exit(0)
 
 }

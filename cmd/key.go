@@ -48,13 +48,30 @@ func getKey(cmd *cobra.Command, args []string) {
 		os.Exit(-1)
 	}
 
+    fmt.Println("KEY MODULE")
+
 	m := data.(map[string]interface{})
 
 	for k, v := range m {
-		if InSlice(k, args) {
-			fmt.Println(v)
-		}
-	}
+        switch key := k.(type) {
+            case string:
+				if InSlice(k, args) {
+					fmt.Println(k)
+				}
+            case int:
+				if InSlice(k, args) {
+					fmt.Println(k)
+				}
+            case []interface{}:
+                for i, u := range k {
+					if InSlice(i, args) {
+						fmt.Println(i)
+					}
+				}
+            default:
+                fmt.Println(k, "is of a type I don't know how to handle")
+            }
+    }
 
 	os.Exit(0)
 
