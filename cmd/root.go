@@ -29,12 +29,11 @@ var RootCmd = &cobra.Command{
 	Use:   "jsonify",
 	Short: "jsonify -- manipulate json and yaml from stdin",
 	Long: `jsonify is a small executable used to manipulate json and yaml from the command line
-    
         Example:
-        echo '{"foo":"show_value_of_foo","bar":"buz"}' | jsonify -K foo`,
-// Uncomment the following line if your bare application
-// has an action associated with it:
-//	Run: func(cmd *cobra.Command, args []string) { },
+        echo '{"foo":"show_value_of_foo","bar":"buz"}' | jsonify --convert foo`,
+	// Uncomment the following line if your bare application
+	// has an action associated with it:
+	//	Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -66,8 +65,8 @@ func initConfig() {
 	}
 
 	viper.SetConfigName(".jsonify") // name of config file (without extension)
-	viper.AddConfigPath("$HOME")  // adding home directory as first search path
-	viper.AutomaticEnv()          // read in environment variables that match
+	viper.AddConfigPath("$HOME")    // adding home directory as first search path
+	viper.AutomaticEnv()            // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {

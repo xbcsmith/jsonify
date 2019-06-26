@@ -17,10 +17,11 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"reflect"
+
+	"github.com/spf13/cobra"
 )
 
 // inspectCmd represents the inspect command
@@ -50,7 +51,7 @@ func inspectAll(cmd *cobra.Command, args []string) {
 
 	m := data.(map[string]interface{})
 
-    fmt.Println("INSPECT MODULE")
+	fmt.Println("INSPECT MODULE")
 
 	for k, v := range m {
 		fmt.Printf("key:%v  value:%v  kind:%s  type:%s\n\n", k, v, reflect.TypeOf(v).Kind(), reflect.TypeOf(v))
