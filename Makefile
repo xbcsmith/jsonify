@@ -29,13 +29,13 @@ Q = $(if $(filter 1,$V),,@)
 M = $(shell printf "\033[34;1m▶\033[0m")
 
 .PHONY: all
-all: fmt lint $(BINARY) $(BINARY)-arm64 $(BINARY)-ppc64le $(BINARY)-darwin
+all: fmt lint test $(BINARY) $(BINARY)-arm64 $(BINARY)-ppc64le $(BINARY)-darwin
 
 .PHONY: linux
-linux: fmt lint $(BINARY)
+linux: fmt lint test $(BINARY)
 
 .PHONY: darwin
-linux: fmt lint $(BINARY)-darwin
+darwin: fmt lint test $(BINARY)-darwin
 
 
 
@@ -104,7 +104,9 @@ fmt: ; $(info $(M) running gofmt…) @ ## Run gofmt on all source files
 		$(GOFMT) -l -w $$d/*.go || ret=$$? ; \
 	 done ; exit $$ret
 
-
+.PHONY: test
+test: ; $(info $(M) running tests…) @
+	$Q go test -v cmd/*
 
 .PHONY: clean
 clean: ; $(info $(M) cleaning…)	@ ## Cleanup everything

@@ -12,4 +12,5 @@ require (
 	github.com/spf13/viper v1.4.0
 	gitlab.sas.com/bcsmit/templateer v0.0.0-20180703005818-922f820773f0
 	gopkg.in/yaml.v2 v2.2.2
+	gotest.tools v2.2.0+incompatible
 )

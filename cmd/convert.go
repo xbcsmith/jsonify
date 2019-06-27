@@ -35,23 +35,24 @@ func IsJSON(buf []byte) bool {
 	return bytes.HasPrefix(trim, prefix)
 }
 
-func json2yaml(d []byte) ([]byte, error) {
-	ms := yaml.MapSlice{}
-	err := yaml.Unmarshal(d, &ms)
+func json2yaml(raw []byte) ([]byte, error) {
+	var output map[string]interface{}
+	err := json.Unmarshal([]byte(raw), &output)
 	if err != nil {
 		return nil, err
 	}
-	m2 := dyno.ConvertMapI2MapS(ms)
+	m2 := dyno.ConvertMapI2MapS(output)
 	return yaml.Marshal(m2)
 }
 
-func yaml2json(d []byte) ([]byte, error) {
-	ms := yaml.MapSlice{}
-	err := yaml.Unmarshal(d, &ms)
+func yaml2json(raw []byte) ([]byte, error) {
+	// ms := yaml.MapSlice{}
+	var output map[string]interface{}
+	err := yaml.Unmarshal(raw, &output)
 	if err != nil {
 		return nil, err
 	}
-	m2 := dyno.ConvertMapI2MapS(ms)
+	m2 := dyno.ConvertMapI2MapS(output)
 	return json.MarshalIndent(m2, "", "  ")
 }
 

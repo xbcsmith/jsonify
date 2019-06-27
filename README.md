@@ -10,10 +10,11 @@ make
 
 ## convert
 
+
 ### JSON to YAML
 
 ```bash
-echo '{"foo":"show_value_of_foo","bar": [ "buz", "cuz", "duz" ], "baz" : { "caz" : "fuz"}}' | jsonify convert
+echo '{"foo":"show_value_of_foo","bar": [ "buz", "cuz", "duz" ], "baz" : { "caz" : "fuz"}}' | jsonify
 ```
 
 ### YAML to JSON
@@ -27,11 +28,26 @@ bar:
 - duz
 baz:
   caz: fuz
-' | jsonify convert
+' | jsonify
 ```
+
+## Convert files
+
+```bash
+jsonify convert ./tests/test.json
+```
+
+```bash
+jsonify convert ./tests/test.yaml
+```
+
 
 ## Path
 
 ```bash
 echo '{"foo":"show_value_of_foo","bar": [ "buz", "cuz", "duz" ], "baz" : { "caz" : "fuz"}}' | jsonify path -p "$.baz.caz"
+```
+
+```bash
+jsonify path -p "$.baz.caz" tests/test.yaml
 ```

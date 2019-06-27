@@ -17,46 +17,91 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 )
+
+const tmpl = `   {{.Key}}  {{.Type}}
+`
+
+func inspector(raw []byte) (string, error) {
+	results := `type Foo struct {
+`
+	end := `
+}
+`
+	var output map[string]interface{}
+	isjson := IsJSON(raw)
+	if isjson != true {
+		err := yaml.Unmarshal([]byte(raw), &output)
+		if err != nil {
+			return results + end, err
+		}
+	} else {
+		err := json.Unmarshal([]byte(raw), &output)
+		if err != nil {
+			return results + end, err
+		}
+	}
+
+	for k, v := range output {
+		builder := &strings.Builder{}
+		key := fmt.Sprintf("%s", strings.Title(k))
+		value := fmt.Sprintf("%s", reflect.TypeOf(v))
+		data := map[string]interface{}{"Key": key, "Type": value}
+		t := template.Must(template.New("keyval").Parse(tmpl))
+		if err := t.Execute(builder, data); err != nil {
+			return results, err
+		}
+		s := builder.String()
+		results = results + s
+	}
+	return results + end, nil
+}
 
 // inspectCmd represents the inspect command
 var inspectCmd = &cobra.Command{
 	Use:   "inspect",
 	Short: "inspect json types",
 	Long:  `Display types and kinds for all elements in json`,
-	Run:   inspectAll,
+	Run:   inspectRunCmd,
 }
 
-func inspectAll(cmd *cobra.Command, args []string) {
+func inspectRunCmd(cmd *cobra.Command, args []string) {
 
-	raw, err := ioutil.ReadAll(os.Stdin)
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+	if len(args) > 0 {
+		for _, filepath := range args {
+			raw, err := ioutil.ReadFile(filepath)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(-1)
+			}
+			output, err := inspector(raw)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(-1)
+			}
+			fmt.Print(output)
+		}
+	} else {
+		raw, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		output, err := inspector(raw)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		fmt.Print(output)
 	}
-
-	var data interface{}
-
-	err = json.Unmarshal(raw, &data)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-
-	m := data.(map[string]interface{})
-
-	fmt.Println("INSPECT MODULE")
-
-	for k, v := range m {
-		fmt.Printf("key:%v  value:%v  kind:%s  type:%s\n\n", k, v, reflect.TypeOf(v).Kind(), reflect.TypeOf(v))
-	}
-
 	os.Exit(0)
 }
 

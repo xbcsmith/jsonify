@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/icza/dyno"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/oliveagle/jsonpath"
@@ -30,18 +31,20 @@ func pathfinder(raw []byte, path string) (interface{}, error) {
 	var output map[string]interface{}
 	isjson := IsJSON(raw)
 	if isjson != true {
-		yaml.Unmarshal([]byte(raw), &output)
-		res, err := jsonpath.JsonPathLookup(output, path)
+		err := yaml.Unmarshal([]byte(raw), &output)
 		if err != nil {
-			fmt.Printf("path not found: %v", err)
 			return nil, err
 		}
-		return res, nil
+	} else {
+		err := json.Unmarshal([]byte(raw), &output)
+		if err != nil {
+			return nil, err
+		}
 	}
-	json.Unmarshal([]byte(raw), &output)
-	res, err := jsonpath.JsonPathLookup(output, path)
+	m2 := dyno.ConvertMapI2MapS(output)
+	res, err := jsonpath.JsonPathLookup(m2, path)
 	if err != nil {
-		fmt.Printf("path not found: %v", err)
+		fmt.Printf("path not found: %v\n", err)
 		return nil, err
 	}
 	return res, nil

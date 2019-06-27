@@ -33,7 +33,7 @@ var RootCmd = &cobra.Command{
         echo '{"foo":"show_value_of_foo","bar":"buz"}' | jsonify --convert foo`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Run: convertRunCmd,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
