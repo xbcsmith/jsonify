@@ -55,6 +55,24 @@ func yaml2json(d []byte) ([]byte, error) {
 	return json.MarshalIndent(m2, "", "  ")
 }
 
+func converter(raw []byte) ([]byte, error) {
+	isjson := IsJSON(raw)
+	if isjson != true {
+		output, err := yaml2json(raw)
+		if err != nil {
+			fmt.Printf("decode data: %v", err)
+			return nil, err
+		}
+		return output, nil
+	}
+	output, err := json2yaml(raw)
+	if err != nil {
+		fmt.Printf("decode data: %v", err)
+		return nil, err
+	}
+	return output, nil
+}
+
 // convertCmd represents the convert command
 var convertCmd = &cobra.Command{
 	Use:   "convert",
@@ -64,23 +82,29 @@ var convertCmd = &cobra.Command{
 }
 
 func convertRunCmd(cmd *cobra.Command, args []string) {
-	raw, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
-	isjson := IsJSON(raw)
-	if isjson != true {
-		output, err := yaml2json(raw)
+	if len(args) > 0 {
+		for _, filepath := range args {
+			raw, err := ioutil.ReadFile(filepath)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(-1)
+			}
+			output, err := converter(raw)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(-1)
+			}
+			fmt.Printf("%s", output)
+		}
+	} else {
+		raw, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
-			fmt.Printf("decode data: %v", err)
+			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Printf("%s", output)
-	} else {
-		output, err := json2yaml(raw)
+		output, err := converter(raw)
 		if err != nil {
-			fmt.Printf("decode data: %v", err)
+			fmt.Println(err)
 			os.Exit(-1)
 		}
 		fmt.Printf("%s", output)

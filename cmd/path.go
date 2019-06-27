@@ -26,6 +26,27 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func pathfinder(raw []byte, path string) (interface{}, error) {
+	var output map[string]interface{}
+	isjson := IsJSON(raw)
+	if isjson != true {
+		yaml.Unmarshal([]byte(raw), &output)
+		res, err := jsonpath.JsonPathLookup(output, path)
+		if err != nil {
+			fmt.Printf("path not found: %v", err)
+			return nil, err
+		}
+		return res, nil
+	}
+	json.Unmarshal([]byte(raw), &output)
+	res, err := jsonpath.JsonPathLookup(output, path)
+	if err != nil {
+		fmt.Printf("path not found: %v", err)
+		return nil, err
+	}
+	return res, nil
+}
+
 // pathCmd represents the path command
 var pathCmd = &cobra.Command{
 	Use:   "path",
@@ -35,30 +56,37 @@ var pathCmd = &cobra.Command{
 }
 
 func pathRunCmd(cmd *cobra.Command, args []string) {
-	raw, err := ioutil.ReadAll(os.Stdin)
-	path, _ := cmd.Flags().GetString("jsonpath")
+	path, err := cmd.Flags().GetString("jsonpath")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	var output interface{}
-	isjson := IsJSON(raw)
-	if isjson != true {
-		yaml.Unmarshal([]byte(raw), &output)
-		res, err := jsonpath.JsonPathLookup(output, path)
-		if err != nil {
-			fmt.Printf("path not found: %v", err)
-			os.Exit(-1)
+	if len(args) > 0 {
+		for _, filepath := range args {
+			raw, err := ioutil.ReadFile(filepath)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(-1)
+			}
+			output, err := pathfinder(raw, path)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(-1)
+			}
+			fmt.Printf("%v", output)
 		}
-		fmt.Printf("%s", res)
 	} else {
-		json.Unmarshal([]byte(raw), &output)
-		res, err := jsonpath.JsonPathLookup(output, path)
+		raw, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
-			fmt.Printf("path not found: %v", err)
+			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Printf("%v", res)
+		output, err := pathfinder(raw, path)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(-1)
+		}
+		fmt.Printf("%v", output)
 	}
 	os.Exit(0)
 }
