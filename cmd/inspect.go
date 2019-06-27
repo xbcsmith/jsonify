@@ -29,40 +29,69 @@ import (
 
 const tmpl = `   {{.Key}}  {{.Type}}
 `
+const begin = `type Foo struct {
+`
+const stmpl = `  {{.Key}} struct {
+`
+
+const end = `}
+`
+const pad = `   `
+
+func maketmpl(data map[string]interface{}, tmpl string) (string, error) {
+	builder := &strings.Builder{}
+	t := template.Must(template.New("new").Parse(tmpl))
+	if err := t.Execute(builder, data); err != nil {
+		return ``, err
+	}
+	s := builder.String()
+	return s, nil
+}
+
+func tostruct(input map[string]interface{}) (string, error) {
+	results := ``
+	for k, v := range input {
+		key := fmt.Sprintf("%s", strings.Title(k))
+		value := fmt.Sprintf("%s", reflect.TypeOf(v))
+		data := map[string]interface{}{"Key": key, "Type": value}
+		s, err := maketmpl(data, tmpl)
+		if err != nil {
+			return results, err
+		}
+		results = results + s
+	}
+	return results, nil
+}
 
 func inspector(raw []byte) (string, error) {
-	results := `type Foo struct {
-`
-	end := `
-}
-`
 	var output map[string]interface{}
 	isjson := IsJSON(raw)
 	if isjson != true {
 		err := yaml.Unmarshal([]byte(raw), &output)
 		if err != nil {
-			return results + end, err
+			return begin + end, err
 		}
 	} else {
 		err := json.Unmarshal([]byte(raw), &output)
 		if err != nil {
-			return results + end, err
+			return begin + end, err
 		}
 	}
-
+	results, err := tostruct(output)
+	if err != nil {
+		return begin + end, err
+	}
 	for k, v := range output {
-		builder := &strings.Builder{}
-		key := fmt.Sprintf("%s", strings.Title(k))
-		value := fmt.Sprintf("%s", reflect.TypeOf(v))
-		data := map[string]interface{}{"Key": key, "Type": value}
-		t := template.Must(template.New("keyval").Parse(tmpl))
-		if err := t.Execute(builder, data); err != nil {
-			return results, err
+		T, ok := v.(map[string]interface{})
+		if ok {
+			d := map[string]interface{}{"Key": k}
+			b, _ := maketmpl(d, stmpl)
+			s, _ := tostruct(T)
+			results = results + b + pad + s + pad + end
 		}
-		s := builder.String()
-		results = results + s
+
 	}
-	return results + end, nil
+	return begin + results + end, nil
 }
 
 // inspectCmd represents the inspect command
