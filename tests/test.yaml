@@ -1,0 +1,22 @@
+foo: show_value_of_foo
+bar:
+- buz
+- cuz
+- duz
+baz:
+  caz: fuz
+flag: true
+zzz:
+  buz:
+  - 1
+  - 2
+  - 3
+yyy:
+- one
+- 2
+- true
+- '4'
+- key: value
+- - 1
+  - '2'
+  - false

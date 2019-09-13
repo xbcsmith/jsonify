@@ -25,6 +25,7 @@ import (
 
 	"github.com/icza/dyno"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -37,29 +38,44 @@ func IsJSON(buf []byte) bool {
 
 func json2yaml(raw []byte) ([]byte, error) {
 	var output map[string]interface{}
-	err := json.Unmarshal([]byte(raw), &output)
-	if err != nil {
+	if err := json.Unmarshal([]byte(raw), &output); err != nil {
 		return nil, err
 	}
 	m2 := dyno.ConvertMapI2MapS(output)
-	return yaml.Marshal(m2)
+	content, err := yaml.Marshal(m2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to yaml : %v", err)
+	}
+	return content, nil
 }
 
-func yaml2json(raw []byte) ([]byte, error) {
+func yaml2json(raw []byte, noindent bool) ([]byte, error) {
 	// ms := yaml.MapSlice{}
 	var output map[string]interface{}
-	err := yaml.Unmarshal(raw, &output)
-	if err != nil {
+	if err := yaml.Unmarshal(raw, &output); err != nil {
 		return nil, err
 	}
 	m2 := dyno.ConvertMapI2MapS(output)
-	return json.MarshalIndent(m2, "", "  ")
+	if noindent {
+		content, err := json.Marshal(m2)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert to yaml : %v", err)
+		}
+		return content, nil
+	}
+
+	content, err := json.MarshalIndent(m2, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to yaml : %v", err)
+	}
+	return content, nil
+
 }
 
-func converter(raw []byte) ([]byte, error) {
+func converter(raw []byte, noindent bool) ([]byte, error) {
 	isjson := IsJSON(raw)
 	if isjson != true {
-		output, err := yaml2json(raw)
+		output, err := yaml2json(raw, noindent)
 		if err != nil {
 			fmt.Printf("decode data: %v", err)
 			return nil, err
@@ -79,10 +95,18 @@ var convertCmd = &cobra.Command{
 	Use:   "convert",
 	Short: "convert json into yaml and yaml into json",
 	Long:  `Convert JSON into YAML and YAML into JSON`,
-	Run:   convertRunCmd,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+	Run: convertRunCmd,
 }
 
 func convertRunCmd(cmd *cobra.Command, args []string) {
+	noindent := viper.GetBool("noindent")
 	if len(args) > 0 {
 		for _, filepath := range args {
 			raw, err := ioutil.ReadFile(filepath)
@@ -90,7 +114,7 @@ func convertRunCmd(cmd *cobra.Command, args []string) {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			output, err := converter(raw)
+			output, err := converter(raw, noindent)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(-1)
@@ -103,7 +127,7 @@ func convertRunCmd(cmd *cobra.Command, args []string) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		output, err := converter(raw)
+		output, err := converter(raw, noindent)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -111,8 +135,10 @@ func convertRunCmd(cmd *cobra.Command, args []string) {
 		fmt.Printf("%s", output)
 	}
 	os.Exit(0)
+
 }
 
 func init() {
+	convertCmd.Flags().Bool("noindent", false, "skip format json")
 	RootCmd.AddCommand(convertCmd)
 }

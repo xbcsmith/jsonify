@@ -1,4 +1,4 @@
-PACKAGE  = github.com/xbcsmith/jsonify
+PACKAGE  = gitlab.sas.com/polaris/jsonify
 BINARY    = bin/jsonify
 COMMIT  ?= $(shell git rev-parse --short=16 HEAD)
 gitversion := $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || \
@@ -18,6 +18,7 @@ override TAGS := $(and $(TAGS),-tags $(TAGS))
 
 GO      = go
 GOBUILD = CGO_ENABLED=0 go build -v
+GOVET   = go vet
 GODOC   = godoc
 GOFMT   = gofmt
 GOGENERATE = go generate
@@ -29,13 +30,16 @@ Q = $(if $(filter 1,$V),,@)
 M = $(shell printf "\033[34;1m▶\033[0m")
 
 .PHONY: all
-all: fmt lint test $(BINARY) $(BINARY)-arm64 $(BINARY)-ppc64le $(BINARY)-darwin
+all: static-tests test $(BINARY) $(BINARY)-arm64 $(BINARY)-ppc64le $(BINARY)-darwin
+
+.PHONY: static-tests
+static-tests: fmt lint vet ## Run fmt lint and vet against all source
 
 .PHONY: linux
-linux: fmt lint test $(BINARY)
+linux: test $(BINARY)
 
 .PHONY: darwin
-darwin: fmt lint test $(BINARY)-darwin
+darwin: test $(BINARY)-darwin
 
 
 
@@ -56,6 +60,9 @@ $(BINARY)-darwin: $(SOURCES); $(info $(M) building darwin executable…) @ ## Bu
 
 
 # Tools
+GOIMPORTS = $(TOOLS)/goimports
+$(GOIMPORTS): ; $(info $(M) building goimports…)
+	$Q go build -o $@ golang.org/x/tools/cmd/goimports
 
 GOLINT = $(TOOLS)/golint
 $(GOLINT): ; $(info $(M) building golint…)
@@ -92,6 +99,44 @@ $(TOOLS)/protoc-gen-go: ; $(info $(M) building protoc-gen-go…)
 	@mkdir -p $(TOOLS)
 	$Q go build -o $@ github.com/golang/protobuf/protoc-gen-go
 
+# Tests
+
+TEST_TARGETS := test-default test-bench test-short test-verbose test-race
+.PHONY: $(TEST_TARGETS) test-xml unit-tests functional-tests check test tests
+test-bench:   ARGS=-run=__absolutelynothing__ -bench=. ## Run benchmarks
+test-short:   ARGS=-short        ## Run only short tests
+test-verbose: ARGS=-v            ## Run tests in verbose mode with coverage reporting
+test-race:    ARGS=-race         ## Run tests with race detector
+$(TEST_TARGETS): NAME=$(MAKECMDGOALS:test-%=%)
+$(TEST_TARGETS): test
+check tests: fmt lint ; $(info $(M) running $(NAME:%=% )tests…) @ ## Run tests
+	$Q $(GO) test -timeout $(TIMEOUT)s $(ARGS) $(TESTPKGS)
+
+test-xml: fmt lint $(GO2XUNIT) ; $(info $(M) running $(NAME:%=% )tests…) @ ## Run tests with xUnit output
+	$Q 2>&1 $(GO) test -timeout 20s -v $(TESTPKGS) | tee tests/tests.output
+	$(GO2XUNIT) -fail -input tests/tests.output -output tests/tests.xml
+
+COVERAGE_MODE = atomic
+COVERAGE_PROFILE = $(COVERAGE_DIR)/profile.out
+COVERAGE_XML = $(COVERAGE_DIR)/coverage.xml
+COVERAGE_HTML = $(COVERAGE_DIR)/index.html
+.PHONY: test-coverage test-coverage-tools
+test-coverage-tools: $(GOCOVMERGE) $(GOCOV) $(GOCOVXML)
+test-coverage: COVERAGE_DIR := $(CURDIR)/tests/coverage.$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+test-coverage: fmt lint test-coverage-tools ; $(info $(M) running coverage tests…) @ ## Run coverage tests
+	$Q mkdir -p $(COVERAGE_DIR)/coverage
+	$Q for pkg in $(TESTPKGS); do \
+        $(GO) test \
+            -coverpkg=$$($(GO) list -f '{{ join .Deps "\n" }}' $$pkg | \
+                    grep '^$(PACKAGE)/' | \
+                    tr '\n' ',')$$pkg \
+            -covermode=$(COVERAGE_MODE) \
+            -coverprofile="$(COVERAGE_DIR)/coverage/`echo $$pkg | tr "/" "-"`.cover" $$pkg ;\
+     done
+	$Q $(GOCOVMERGE) $(COVERAGE_DIR)/coverage/*.cover > $(COVERAGE_PROFILE)
+	$Q $(GO) tool cover -html=$(COVERAGE_PROFILE) -o $(COVERAGE_HTML)
+	$Q $(GOCOV) convert $(COVERAGE_PROFILE) | $(GOCOVXML) > $(COVERAGE_XML)
+
 .PHONY: lint
 lint: $(GOLINT) ; $(info $(M) running golint…) @ ## Run golint change ret=1 to make lint required
 	$Q ret=0 && for pkg in $(PKGS); do \
@@ -104,14 +149,18 @@ fmt: ; $(info $(M) running gofmt…) @ ## Run gofmt on all source files
 		$(GOFMT) -l -w $$d/*.go || ret=$$? ; \
 	 done ; exit $$ret
 
+.PHONY: vet
+vet: ; $(info $(M) running go vet…) @ ## Run go vet on all source files
+	$(GOVET) ./...
+
 .PHONY: test
 test: ; $(info $(M) running tests…) @
-	$Q go test -v cmd/*
+	$Q go test -v ./...
 
 .PHONY: clean
 clean: ; $(info $(M) cleaning…)	@ ## Cleanup everything
 	@rm -rf bin tools vendor
-
+	@rm -rf tests/tests.* tests/coverage.*
 
 .PHONY: help
 help:

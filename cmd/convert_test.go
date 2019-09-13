@@ -24,7 +24,7 @@ import (
 func TestConverterJson(t *testing.T) {
 	tests := NewTests()
 	expected := `- key:`
-	actual, err := converter(tests.a)
+	actual, err := converter(tests.a, false)
 	assert.Assert(t, is.Nil(err))
 	assert.Assert(t, !IsJSON(actual))
 	assert.Assert(t, is.Contains(string(actual), expected))
@@ -33,7 +33,16 @@ func TestConverterJson(t *testing.T) {
 func TestConverterYaml(t *testing.T) {
 	tests := NewTests()
 	expected := `"bar": [`
-	actual, err := converter(tests.b)
+	actual, err := converter(tests.b, false)
+	assert.Assert(t, is.Nil(err))
+	assert.Assert(t, IsJSON(actual))
+	assert.Assert(t, is.Contains(string(actual), expected))
+}
+
+func TestConverterYamlNoIndent(t *testing.T) {
+	tests := NewTests()
+	expected := `bar":[`
+	actual, err := converter(tests.b, true)
 	assert.Assert(t, is.Nil(err))
 	assert.Assert(t, IsJSON(actual))
 	assert.Assert(t, is.Contains(string(actual), expected))
