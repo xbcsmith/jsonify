@@ -71,12 +71,17 @@ func pathRunCmd(cmd *cobra.Command, args []string) {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			output, err := pathfinder(raw, path)
+			results, err := pathfinder(raw, path)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			fmt.Printf("%v", output)
+			output, err := json.Marshal(results)
+			if err != nil {
+				fmt.Printf("Marshal error: %v\n", err)
+				os.Exit(-1)
+			}
+			fmt.Printf("%s\n", string(output))
 		}
 	} else {
 		raw, err := ioutil.ReadAll(os.Stdin)
@@ -84,12 +89,17 @@ func pathRunCmd(cmd *cobra.Command, args []string) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		output, err := pathfinder(raw, path)
+		results, err := pathfinder(raw, path)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Printf("%v", output)
+		output, err := json.Marshal(results)
+		if err != nil {
+			fmt.Printf("Marshal error: %v\n", err)
+			os.Exit(-1)
+		}
+		fmt.Printf("%s\n", string(output))
 	}
 	os.Exit(0)
 }
