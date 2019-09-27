@@ -33,7 +33,6 @@ type Tests struct {
 }
 
 const ystr = `
-foo: show_value_of_foo
 bar:
 - buz
 - cuz
@@ -41,55 +40,66 @@ bar:
 baz:
   caz: fuz
 flag: true
+foo: show_value_of_foo
+yyy:
+- one
+- 2
+- true
+- "4"
+- key: value
+- - 1
+  - "2"
+  - things:
+    - complicated: true
+      couldbe: maybe
+      notreally: false
 zzz:
   buz:
   - 1
   - 2
   - 3
-yyy:
-- one
-- 2
-- true
-- '4'
-- key: value
-- - 1
-  - '2'
-  - false
 `
 
-const jstr = `
-{
-    "bar": [
-        "buz",
-        "cuz",
-        "duz"
-    ],
-    "baz": {
-        "caz": "fuz"
+const jstr = `{
+  "bar": [
+    "buz",
+    "cuz",
+    "duz"
+  ],
+  "baz": {
+    "caz": "fuz"
+  },
+  "flag": true,
+  "foo": "show_value_of_foo",
+  "yyy": [
+    "one",
+    2,
+    true,
+    "4",
+    {
+      "key": "value"
     },
-    "flag": true,
-    "foo": "show_value_of_foo",
-    "yyy": [
-        "one",
-        2,
-        true,
-        "4",
-        {
-            "key": "value"
-        },
-        [
-            1,
-            "2",
-            false
+    [
+      1,
+      "2",
+      {
+        "things": [
+          {
+            "complicated": true,
+            "couldbe": "maybe",
+            "notreally": false
+          }
         ]
-    ],
-    "zzz": {
-        "buz": [
-            1,
-            2,
-            3
-        ]
-    }
+      }
+    ]
+  ],
+  "zzz": {
+    "buz": [
+      1,
+      2,
+      3
+    ]
+  }
 }
 `
 

@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
@@ -35,4 +36,11 @@ func TestInspectorYaml(t *testing.T) {
 	actual, err := inspector(tests.b)
 	assert.Assert(t, is.Nil(err))
 	assert.Assert(t, is.Contains(actual, expected))
+}
+
+func TestInspectorOutYaml(t *testing.T) {
+	tests := NewTests()
+	actual, err := inspector(tests.b)
+	assert.Assert(t, is.Nil(err))
+	fmt.Printf("%v\n", actual)
 }

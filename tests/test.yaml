@@ -1,4 +1,3 @@
-foo: show_value_of_foo
 bar:
 - buz
 - cuz
@@ -6,17 +5,21 @@ bar:
 baz:
   caz: fuz
 flag: true
+foo: show_value_of_foo
+yyy:
+- one
+- 2
+- true
+- "4"
+- key: value
+- - 1
+  - "2"
+  - things:
+    - complicated: true
+      couldbe: maybe
+      notreally: false
 zzz:
   buz:
   - 1
   - 2
   - 3
-yyy:
-- one
-- 2
-- true
-- '4'
-- key: value
-- - 1
-  - '2'
-  - false

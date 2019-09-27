@@ -23,10 +23,9 @@ import (
 	"encoding/json"
 	"unicode"
 
-	"github.com/icza/dyno"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // IsJSON try to guess if file is json or yaml
@@ -41,8 +40,8 @@ func json2yaml(raw []byte) ([]byte, error) {
 	if err := json.Unmarshal([]byte(raw), &output); err != nil {
 		return nil, err
 	}
-	m2 := dyno.ConvertMapI2MapS(output)
-	content, err := yaml.Marshal(m2)
+
+	content, err := yaml.Marshal(output)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to yaml : %v", err)
 	}
@@ -55,16 +54,16 @@ func yaml2json(raw []byte, noindent bool) ([]byte, error) {
 	if err := yaml.Unmarshal(raw, &output); err != nil {
 		return nil, err
 	}
-	m2 := dyno.ConvertMapI2MapS(output)
+
 	if noindent {
-		content, err := json.Marshal(m2)
+		content, err := json.Marshal(output)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert to yaml : %v", err)
 		}
 		return content, nil
 	}
 
-	content, err := json.MarshalIndent(m2, "", "  ")
+	content, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to yaml : %v", err)
 	}

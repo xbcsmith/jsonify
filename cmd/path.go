@@ -20,8 +20,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/icza/dyno"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 
 	"github.com/oliveagle/jsonpath"
 	"github.com/spf13/cobra"
@@ -41,8 +40,7 @@ func pathfinder(raw []byte, path string) (interface{}, error) {
 			return nil, err
 		}
 	}
-	m2 := dyno.ConvertMapI2MapS(output)
-	res, err := jsonpath.JsonPathLookup(m2, path)
+	res, err := jsonpath.JsonPathLookup(output, path)
 	if err != nil {
 		fmt.Printf("path not found: %v\n", err)
 		return nil, err
@@ -71,17 +69,12 @@ func pathRunCmd(cmd *cobra.Command, args []string) {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			results, err := pathfinder(raw, path)
+			output, err := pathfinder(raw, path)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			output, err := json.Marshal(results)
-			if err != nil {
-				fmt.Printf("Marshal error: %v\n", err)
-				os.Exit(-1)
-			}
-			fmt.Printf("%s\n", string(output))
+			fmt.Printf("%v", output)
 		}
 	} else {
 		raw, err := ioutil.ReadAll(os.Stdin)
@@ -89,17 +82,12 @@ func pathRunCmd(cmd *cobra.Command, args []string) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		results, err := pathfinder(raw, path)
+		output, err := pathfinder(raw, path)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		output, err := json.Marshal(results)
-		if err != nil {
-			fmt.Printf("Marshal error: %v\n", err)
-			os.Exit(-1)
-		}
-		fmt.Printf("%s\n", string(output))
+		fmt.Printf("%v", output)
 	}
 	os.Exit(0)
 }

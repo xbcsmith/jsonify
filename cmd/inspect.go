@@ -15,28 +15,57 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/cobra"
+	"go/parser"
+	"go/printer"
+	"go/token"
+	yaml "gopkg.in/yaml.v3"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
-
-	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 )
 
-const tmpl = `   {{.Key}}  {{.Type}}
-`
-const begin = `type Foo struct {
+const tmpl = `   {{.Key}}  {{.Type}}`
+
+const begin = `
+package main
+
+// Foo struct generated
+type Foo struct {
 `
 const stmpl = `  {{.Key}} struct {
 `
 
 const end = `}
+
 `
 const pad = `   `
+
+const ret = `
+`
+const etmpl = `json:"{{.Key}}" yaml:"{{.Key}}"`
+
+const (
+	indentAdj   = 0
+	tabWidth    = 8
+	printerMode = printer.UseSpaces | printer.TabIndent
+)
+
+var (
+	parserMode parser.Mode
+)
+
+func initParserMode() {
+	parserMode = parser.ParseComments
+	if true {
+		parserMode |= parser.AllErrors
+	}
+}
 
 func maketmpl(data map[string]interface{}, tmpl string) (string, error) {
 	builder := &strings.Builder{}
@@ -48,19 +77,106 @@ func maketmpl(data map[string]interface{}, tmpl string) (string, error) {
 	return s, nil
 }
 
+func keyHandler(key string, low bool) string {
+	r := strings.NewReplacer("-", "_")
+	t := r.Replace(key)
+	new := ``
+	for _, wrd := range strings.Split(t, "_") {
+		new = new + strings.Title(wrd)
+	}
+	if low {
+		new = strings.ToLower(new)
+	}
+	return new
+}
+
 func tostruct(input map[string]interface{}) (string, error) {
 	results := ``
 	for k, v := range input {
-		key := fmt.Sprintf("%s", strings.Title(k))
+		// TODO look for _ or - and remove them while Capitalizing next letter
+		key := fmt.Sprintf("%s", keyHandler(k, false))
 		value := fmt.Sprintf("%s", reflect.TypeOf(v))
 		data := map[string]interface{}{"Key": key, "Type": value}
 		s, err := maketmpl(data, tmpl)
 		if err != nil {
 			return results, err
 		}
-		results = results + s
+		edata := map[string]interface{}{"Key": keyHandler(k, true)}
+		e, err := maketmpl(edata, etmpl)
+		if err != nil {
+			return results, err
+		}
+		results = results + s + pad + "`" + e + "`" + ret
 	}
 	return results, nil
+}
+
+// isSpace is copied from go/src/cmd/gofmt/internal.go
+// isSpace reports whether the byte is a space character.
+// isSpace defines a space as being among the following bytes: ' ', '\t', '\n' and '\r'.
+func isSpace(b byte) bool {
+	return b == ' ' || b == '\t' || b == '\n' || b == '\r'
+}
+
+// format is derived from go/src/cmd/gofmt/internal.go
+func format(src []byte) ([]byte, error) {
+	initParserMode()
+	fset := token.NewFileSet()
+	empty := []byte("")
+	file, err := parser.ParseFile(fset, "foo.go", src, parserMode)
+	if err != nil {
+		return empty, err
+	}
+	i, j := 0, 0
+	for j < len(src) && isSpace(src[j]) {
+		if src[j] == '\n' {
+			i = j + 1
+		}
+		j++
+	}
+	var res []byte
+	res = append(res, src[:i]...)
+	indent := 0
+	hasSpace := false
+	for _, b := range src[i:j] {
+		switch b {
+		case ' ':
+			hasSpace = true
+		case '\t':
+			indent++
+		}
+	}
+	if indent == 0 && hasSpace {
+		indent = 1
+	}
+	for i := 0; i < indent; i++ {
+		res = append(res, '\t')
+	}
+	cfg := printer.Config{
+		Mode:     0,
+		Tabwidth: tabWidth,
+		Indent:   0,
+	}
+	cfg.Indent = indent + indentAdj
+	var buf bytes.Buffer
+	if err := cfg.Fprint(&buf, fset, file); err != nil {
+		return empty, err
+	}
+	sourceAdj := func(src []byte, indent int) []byte {
+		return bytes.TrimSpace(src)
+	}
+	out := sourceAdj(buf.Bytes(), cfg.Indent)
+	if len(out) == 0 {
+		return src, nil
+	}
+	res = append(res, out...)
+	i = len(src)
+	for i > 0 && isSpace(src[i-1]) {
+		i--
+	}
+
+	return append(res, src[i:]...), nil
+
 }
 
 func inspector(raw []byte) (string, error) {
@@ -84,14 +200,19 @@ func inspector(raw []byte) (string, error) {
 	for k, v := range output {
 		T, ok := v.(map[string]interface{})
 		if ok {
-			d := map[string]interface{}{"Key": k}
+			d := map[string]interface{}{"Key": keyHandler(k, false)}
 			b, _ := maketmpl(d, stmpl)
 			s, _ := tostruct(T)
 			results = results + b + pad + s + pad + end
 		}
 
 	}
-	return begin + results + end, nil
+	code := begin + results + end
+	final, err := format([]byte(code))
+	if err != nil {
+		return "", err
+	}
+	return string(final), nil
 }
 
 // inspectCmd represents the inspect command
@@ -136,15 +257,4 @@ func inspectRunCmd(cmd *cobra.Command, args []string) {
 
 func init() {
 	RootCmd.AddCommand(inspectCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// keyCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// keyCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }

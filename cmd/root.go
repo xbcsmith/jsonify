@@ -30,17 +30,9 @@ var RootCmd = &cobra.Command{
 	Short: "jsonify -- manipulate json and yaml from stdin",
 	Long: `jsonify is a small executable used to manipulate json and yaml from the command line
         Example:
-        echo '{"foo":"show_value_of_foo","bar":"buz"}' | jsonify
-        jsonify convert foo.yml`,
+        echo '{"foo":"show_value_of_foo","bar":"buz"}' | jsonify --convert foo`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		err := viper.BindPFlags(cmd.Flags())
-		if err != nil {
-			return err
-		}
-		return nil
-	},
 	Run: convertRunCmd,
 }
 
