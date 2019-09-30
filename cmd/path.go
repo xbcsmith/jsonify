@@ -24,6 +24,7 @@ import (
 
 	"github.com/oliveagle/jsonpath"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func pathfinder(raw []byte, path string) (interface{}, error) {
@@ -53,15 +54,18 @@ var pathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "path json path syntax support",
 	Long:  `path json path syntax support for JSON or YAML`,
-	Run:   pathRunCmd,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+		return nil
+	},
+	Run: pathRunCmd,
 }
 
 func pathRunCmd(cmd *cobra.Command, args []string) {
-	path, err := cmd.Flags().GetString("jsonpath")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
+	path := viper.GetString("jsonpath")
 	if len(args) > 0 {
 		for _, filepath := range args {
 			raw, err := ioutil.ReadFile(filepath)
@@ -69,12 +73,17 @@ func pathRunCmd(cmd *cobra.Command, args []string) {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			output, err := pathfinder(raw, path)
+			results, err := pathfinder(raw, path)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			fmt.Printf("%v", output)
+			output, err := json.Marshal(results)
+			if err != nil {
+				fmt.Printf("Marshal error: %v\n", err)
+				os.Exit(-1)
+			}
+			fmt.Printf("%s\n", string(output))
 		}
 	} else {
 		raw, err := ioutil.ReadAll(os.Stdin)
@@ -82,12 +91,17 @@ func pathRunCmd(cmd *cobra.Command, args []string) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		output, err := pathfinder(raw, path)
+		results, err := pathfinder(raw, path)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		fmt.Printf("%v", output)
+		output, err := json.Marshal(results)
+		if err != nil {
+			fmt.Printf("Marshal error: %v\n", err)
+			os.Exit(-1)
+		}
+		fmt.Printf("%s\n", string(output))
 	}
 	os.Exit(0)
 }
