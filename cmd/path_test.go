@@ -34,30 +34,35 @@ type Tests struct {
 
 const ystr = `
 bar:
-- buz
-- cuz
-- duz
+  - buz
+  - cuz
+  - duz
 baz:
-  caz: fuz
+    caz: fuz
 flag: true
 foo: show_value_of_foo
+fuzzy:
+    complicated-it-is:
+        could_be-but:
+            not-really_possible:
+                until_it_is: true
 yyy:
-- one
-- 2
-- true
-- "4"
-- key: value
-- - 1
-  - "2"
-  - things:
-    - complicated: true
-      couldbe: maybe
-      notreally: false
-zzz:
-  buz:
-  - 1
+  - one
   - 2
-  - 3
+  - true
+  - "4"
+  - key: value
+  - - 1
+    - "2"
+    - things:
+        - complicated: true
+          couldbe: maybe
+          notreally: false
+zzz-zzz:
+    buz:
+      - 1
+      - 2
+      - 3
 `
 
 const jstr = `{
@@ -71,6 +76,15 @@ const jstr = `{
   },
   "flag": true,
   "foo": "show_value_of_foo",
+  "fuzzy": {
+    "complicated-it-is": {
+      "could_be-but": {
+        "not-really_possible": {
+          "until_it_is": true
+        }
+      }
+    }
+  },
   "yyy": [
     "one",
     2,
@@ -93,7 +107,7 @@ const jstr = `{
       }
     ]
   ],
-  "zzz": {
+  "zzz-zzz": {
     "buz": [
       1,
       2,

@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+		"github.com/spf13/viper"
 	"github.com/spf13/cobra"
 	"go/parser"
 	"go/printer"
@@ -78,37 +79,167 @@ func maketmpl(data map[string]interface{}, tmpl string) (string, error) {
 }
 
 func keyHandler(key string, low bool) string {
+	if low {
+		new := strings.ToLower(key)
+		return new
+	}
 	r := strings.NewReplacer("-", "_")
 	t := r.Replace(key)
 	new := ``
 	for _, wrd := range strings.Split(t, "_") {
 		new = new + strings.Title(wrd)
 	}
-	if low {
-		new = strings.ToLower(new)
-	}
+
 	return new
 }
 
-func tostruct(input map[string]interface{}) (string, error) {
+
+func makeElem(k string, v interface{}) (string, error) {
 	results := ``
-	for k, v := range input {
-		// TODO look for _ or - and remove them while Capitalizing next letter
-		key := fmt.Sprintf("%s", keyHandler(k, false))
-		value := fmt.Sprintf("%s", reflect.TypeOf(v))
-		data := map[string]interface{}{"Key": key, "Type": value}
-		s, err := maketmpl(data, tmpl)
-		if err != nil {
-			return results, err
-		}
-		edata := map[string]interface{}{"Key": keyHandler(k, true)}
-		e, err := maketmpl(edata, etmpl)
-		if err != nil {
-			return results, err
-		}
-		results = results + s + pad + "`" + e + "`" + ret
+	key := fmt.Sprintf("%s", keyHandler(k, false))
+	value := fmt.Sprintf("%s", reflect.TypeOf(v))
+	data := map[string]interface{}{"Key": key, "Type": value}
+	s, err := maketmpl(data, tmpl)
+	if err != nil {
+		return results, err
 	}
+	edata := map[string]interface{}{"Key": keyHandler(k, true)}
+	e, err := maketmpl(edata, etmpl)
+	if err != nil {
+		return results, err
+	}
+	results = results + s + pad + "`" + e + "`" + ret
 	return results, nil
+}
+
+func baseToStruct(input interface{}) (string, error) {
+	switch i := input.(type) {
+	case string:
+		r, err := makeElem(fmt.Sprintf("%v", i), input)
+		if err != nil {
+			return "", err
+		}
+		return r, nil
+	case int:
+		r, err := makeElem(fmt.Sprintf("%v", i), input)
+		if err != nil {
+			return "", err
+		}
+		return r, nil
+	case int64:
+		r, err := makeElem(fmt.Sprintf("%v", i), input)
+		if err != nil {
+			return "", err
+		}
+		return r, nil
+	case float64:
+		r, err := makeElem(fmt.Sprintf("%v", i), input)
+		if err != nil {
+			return "", err
+		}
+		return r, nil
+	case uint64:
+		r, err := makeElem(fmt.Sprintf("%v", i), input)
+		if err != nil {
+			return "", err
+		}
+		return r, nil
+	case bool:
+		r, err := makeElem(fmt.Sprintf("%v", i), input)
+		if err != nil {
+			return "", err
+		}
+		return r, nil
+	default:
+		r, err := makeElem(fmt.Sprintf("%v", i), input)
+		if err != nil {
+			return "", err
+		}
+		return r, nil
+	}
+	return "", fmt.Errorf("should not get here")
+}
+
+func mapToStruct(input map[string]interface{}) (string, error) {
+		return "", nil
+}
+
+func arrayToStruct(input []interface{}) (string, error) {
+		return "", nil
+}
+
+func tostruct(input interface{}) (string, error) {
+	res := ``
+	switch i := input.(type) {
+	case map[string]interface{}:
+		r, err := mapToStruct(input.(map[string]interface{}))
+		if err != nil {
+			return "", err
+		}
+		res = res + r
+	case []interface{}:
+			r, err := arrayToStruct(input.([]interface{}))
+			if err != nil {
+				return "", err
+			}
+			res = res + r
+	default:
+			fmt.Printf("%v", i)
+			r, err := baseToStruct(input)
+			if err != nil {
+				return "", err
+			}
+			res = res + r
+	}
+
+			return res, nil
+}
+
+
+func reflector(input interface{}) (string, error) {
+	res := ``
+	switch i := input.(type) {
+	case map[string]interface{}:
+		// fmt.Printf("map[string]interface{} %v/n", input.(map[string]interface{}))
+		for _, v := range input.(map[string]interface{}) {
+			r, err := reflector(v)
+			if err != nil {
+				return "", err
+			}
+			// res = res + "Key : " + fmt.Sprintf("%v", v) + pad + "Type: " + r + ret
+			res = res + "Key : " + fmt.Sprintf("%v\n", v) + pad + r + ret
+		}
+	case []interface{}:
+		// fmt.Printf("[]interface{} %v\n", input.([]interface{}))
+		for _, v := range input.([]interface{}) {
+			r, err := reflector(v)
+			if err != nil {
+				return "", err
+			}
+			// res = res + "Key : " + fmt.Sprintf("%v", v) + pad + "Type: " + r + ret
+			res = res + "Key : " + fmt.Sprintf("%v\n", v) + pad +  r + ret
+		}
+	case string:
+		// fmt.Printf("string %v\n", input.(string))
+		res = res  + "\tValue : " + fmt.Sprintf("%v", input.(string)) + pad + "Type: string"// + ret
+	case int:
+		// fmt.Printf("int %v\n", input.(int))
+		res = res  + "\tValue : " + fmt.Sprintf("%v", input.(int)) + pad + "Type: int"// + ret
+	case uint64:
+		// fmt.Printf("uint64 %v\n", input.(uint64))
+		res = res  + "\tValue : " + fmt.Sprintf("%v", input.(uint64)) + pad + "Type: uint64"// + ret
+	case bool:
+		// fmt.Printf("bool %v\n", input.(bool))
+		res = res  + "\tValue : " + fmt.Sprintf("%v", input.(bool)) + pad + "Type: bool"// + ret
+	case nil:
+		// fmt.Printf("nil %v", input)
+		res = res  + "\tValue : <nil>" + pad + "Type: nil"// + ret
+	default:
+		// fmt.Println(i)
+		fmt.Printf("UnExpected type %T : %v", input, i)
+	}
+
+	return res, nil
 }
 
 // isSpace is copied from go/src/cmd/gofmt/internal.go
@@ -179,7 +310,7 @@ func format(src []byte) ([]byte, error) {
 
 }
 
-func inspector(raw []byte) (string, error) {
+func inspector(raw []byte, ref bool) (string, error) {
 	var output map[string]interface{}
 	isjson := IsJSON(raw)
 	if isjson != true {
@@ -193,26 +324,54 @@ func inspector(raw []byte) (string, error) {
 			return begin + end, err
 		}
 	}
-	results, err := tostruct(output)
-	if err != nil {
-		return begin + end, err
-	}
-	for k, v := range output {
-		T, ok := v.(map[string]interface{})
-		if ok {
-			d := map[string]interface{}{"Key": keyHandler(k, false)}
-			b, _ := maketmpl(d, stmpl)
-			s, _ := tostruct(T)
-			results = results + b + pad + s + pad + end
+	results := ``
+	switch ref {
+	case true:
+		r, err := reflector(output)
+		if err != nil {
+			return "", err
 		}
+		results = results + r
+		for k, v := range output {
+			key := fmt.Sprintf("%s", k)
+			value := fmt.Sprintf("%s", reflect.TypeOf(v))
+			r, err := reflector(v)
+			if err != nil {
+				return "", err
+			}
+			results = results + "Key : " + key + "\tValue : " + value + ret + r
+		}
+		return results, nil
+	default:
+		r, err := tostruct(output)
+		if err != nil {
+			return begin + end, err
+		}
+		results = results + r
+		for k, v := range output {
+			T, ok := v.(map[string]interface{})
+			if ok {
+				d := map[string]interface{}{"Key": keyHandler(k, false)}
+				b, _ := maketmpl(d, stmpl)
+				s, _ := tostruct(T)
+				results = results + b + pad + s + pad + end
+			} else {
+				s, _ := tostruct(T)
+				results = results + s
+			}
 
+		}
+		code := begin + results + end
+		final, err := format([]byte(code))
+		if err != nil {
+			return "", err
+		}
+		return string(final), nil
 	}
-	code := begin + results + end
-	final, err := format([]byte(code))
-	if err != nil {
-		return "", err
-	}
-	return string(final), nil
+
+
+
+
 }
 
 // inspectCmd represents the inspect command
@@ -220,11 +379,18 @@ var inspectCmd = &cobra.Command{
 	Use:   "inspect",
 	Short: "inspect json types",
 	Long:  `Display types and kinds for all elements in json`,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 	Run:   inspectRunCmd,
 }
 
 func inspectRunCmd(cmd *cobra.Command, args []string) {
-
+	ref := viper.GetBool("reflect")
 	if len(args) > 0 {
 		for _, filepath := range args {
 			raw, err := ioutil.ReadFile(filepath)
@@ -232,7 +398,7 @@ func inspectRunCmd(cmd *cobra.Command, args []string) {
 				fmt.Println(err)
 				os.Exit(-1)
 			}
-			output, err := inspector(raw)
+			output, err := inspector(raw, ref)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(-1)
@@ -245,7 +411,7 @@ func inspectRunCmd(cmd *cobra.Command, args []string) {
 			fmt.Println(err)
 			os.Exit(-1)
 		}
-		output, err := inspector(raw)
+		output, err := inspector(raw, ref)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(-1)
@@ -256,5 +422,6 @@ func inspectRunCmd(cmd *cobra.Command, args []string) {
 }
 
 func init() {
+	inspectCmd.Flags().Bool("reflect", false, "Show objects with type information")
 	RootCmd.AddCommand(inspectCmd)
 }

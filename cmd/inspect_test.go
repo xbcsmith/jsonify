@@ -24,8 +24,8 @@ import (
 
 func TestInspectorJson(t *testing.T) {
 	tests := NewTests()
-	expected := `Zzz`
-	actual, err := inspector(tests.a)
+	expected := `ZzzZzz`
+	actual, err := inspector(tests.a, false)
 	assert.Assert(t, is.Nil(err))
 	assert.Assert(t, is.Contains(actual, expected))
 }
@@ -33,14 +33,21 @@ func TestInspectorJson(t *testing.T) {
 func TestInspectorYaml(t *testing.T) {
 	tests := NewTests()
 	expected := `Yyy`
-	actual, err := inspector(tests.b)
+	actual, err := inspector(tests.b, false)
 	assert.Assert(t, is.Nil(err))
 	assert.Assert(t, is.Contains(actual, expected))
 }
 
 func TestInspectorOutYaml(t *testing.T) {
 	tests := NewTests()
-	actual, err := inspector(tests.b)
+	actual, err := inspector(tests.b, false)
+	assert.Assert(t, is.Nil(err))
+	fmt.Printf("%v\n", actual)
+}
+
+func TestInspectorReflectYaml(t *testing.T) {
+	tests := NewTests()
+	actual, err := inspector(tests.b, true)
 	assert.Assert(t, is.Nil(err))
 	fmt.Printf("%v\n", actual)
 }

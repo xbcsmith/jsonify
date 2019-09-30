@@ -6,6 +6,11 @@ baz:
   caz: fuz
 flag: true
 foo: show_value_of_foo
+fuzzy:
+  complicated-it-is:
+    could_be-but:
+      not-really_possible:
+        until_it_is: true
 yyy:
 - one
 - 2

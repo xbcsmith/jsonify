@@ -24,6 +24,7 @@ import (
 
 	"github.com/oliveagle/jsonpath"
 	"github.com/spf13/cobra"
+		"github.com/spf13/viper"
 )
 
 func pathfinder(raw []byte, path string) (interface{}, error) {
@@ -53,6 +54,13 @@ var pathCmd = &cobra.Command{
 	Use:   "path",
 	Short: "path json path syntax support",
 	Long:  `path json path syntax support for JSON or YAML`,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return err
+		}
+		return nil
+	},
 	Run:   pathRunCmd,
 }
 
