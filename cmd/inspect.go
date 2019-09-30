@@ -18,16 +18,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"go/parser"
 	"go/printer"
 	"go/token"
-	yaml "gopkg.in/yaml.v3"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v3"
 )
 
 const tmpl = `   {{.Key}}  {{.Type}}`
@@ -78,15 +79,17 @@ func maketmpl(data map[string]interface{}, tmpl string) (string, error) {
 }
 
 func keyHandler(key string, low bool) string {
+	if low {
+		new := strings.ToLower(key)
+		return new
+	}
 	r := strings.NewReplacer("-", "_")
 	t := r.Replace(key)
 	new := ``
 	for _, wrd := range strings.Split(t, "_") {
 		new = new + strings.Title(wrd)
 	}
-	if low {
-		new = strings.ToLower(new)
-	}
+
 	return new
 }
 
