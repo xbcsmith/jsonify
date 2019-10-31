@@ -18,17 +18,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/spf13/cobra"
 	"go/parser"
 	"go/printer"
 	"go/token"
+	yaml "gopkg.in/yaml.v3"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
-
-	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v3"
 )
 
 const tmpl = `   {{.Key}}  {{.Type}}`

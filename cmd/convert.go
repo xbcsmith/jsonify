@@ -30,13 +30,18 @@ import (
 
 // IsJSON try to guess if file is json or yaml
 func IsJSON(buf []byte) bool {
-	var prefix = []byte("{")
 	trim := bytes.TrimLeftFunc(buf, unicode.IsSpace)
-	return bytes.HasPrefix(trim, prefix)
+	if bytes.HasPrefix(trim, []byte("{")) {
+		return true
+	}
+	if bytes.HasPrefix(trim, []byte("[")) {
+		return true
+	}
+	return false
 }
 
 func json2yaml(raw []byte) ([]byte, error) {
-	var output map[string]interface{}
+	var output interface{}
 	if err := json.Unmarshal([]byte(raw), &output); err != nil {
 		return nil, err
 	}
@@ -50,7 +55,7 @@ func json2yaml(raw []byte) ([]byte, error) {
 
 func yaml2json(raw []byte, noindent bool) ([]byte, error) {
 	// ms := yaml.MapSlice{}
-	var output map[string]interface{}
+	var output interface{}
 	if err := yaml.Unmarshal(raw, &output); err != nil {
 		return nil, err
 	}

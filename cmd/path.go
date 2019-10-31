@@ -28,7 +28,7 @@ import (
 )
 
 func pathfinder(raw []byte, path string) (interface{}, error) {
-	var output map[string]interface{}
+	var output interface{}
 	isjson := IsJSON(raw)
 	if isjson != true {
 		err := yaml.Unmarshal([]byte(raw), &output)

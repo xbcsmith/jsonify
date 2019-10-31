@@ -30,6 +30,15 @@ func TestConverterJson(t *testing.T) {
 	assert.Assert(t, is.Contains(string(actual), expected))
 }
 
+func TestConverterAlsoJson(t *testing.T) {
+	tests := NewTests()
+	expected := `brackets:`
+	actual, err := converter(tests.e, false)
+	assert.Assert(t, is.Nil(err))
+	assert.Assert(t, !IsJSON(actual))
+	assert.Assert(t, is.Contains(string(actual), expected))
+}
+
 func TestConverterYaml(t *testing.T) {
 	tests := NewTests()
 	expected := `"bar": [`
