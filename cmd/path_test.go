@@ -28,6 +28,7 @@ type Tests struct {
 	b []byte
 	c map[string]interface{}
 	d interface{}
+	e []byte
 }
 
 const ystr = `
@@ -129,6 +130,7 @@ func NewTests() *Tests {
 		b: []byte(ystr),
 		c: j,
 		d: y,
+		e: []byte(`[{"brackets" : "json"}]`),
 	}
 	return tests
 }
