@@ -30,13 +30,13 @@ import (
 func pathfinder(raw []byte, path string) (interface{}, error) {
 	var output interface{}
 	isjson := IsJSON(raw)
-	if isjson != true {
-		err := yaml.Unmarshal([]byte(raw), &output)
+	if !isjson {
+		err := yaml.Unmarshal(raw, &output)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		err := json.Unmarshal([]byte(raw), &output)
+		err := json.Unmarshal(raw, &output)
 		if err != nil {
 			return nil, err
 		}

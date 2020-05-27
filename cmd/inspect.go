@@ -18,16 +18,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"go/parser"
 	"go/printer"
 	"go/token"
-	yaml "gopkg.in/yaml.v3"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v3"
 )
 
 const tmpl = `   {{.Key}}  {{.Type}}`
@@ -51,9 +52,8 @@ const ret = `
 const etmpl = `json:"{{.Key}}" yaml:"{{.Key}}"`
 
 const (
-	indentAdj   = 0
-	tabWidth    = 8
-	printerMode = printer.UseSpaces | printer.TabIndent
+	indentAdj = 0
+	tabWidth  = 8
 )
 
 var (
@@ -86,7 +86,7 @@ func keyHandler(key string, low bool) string {
 	t := r.Replace(key)
 	new := ``
 	for _, wrd := range strings.Split(t, "_") {
-		new = new + strings.Title(wrd)
+		new += strings.Title(wrd)
 	}
 
 	return new
@@ -96,8 +96,8 @@ func tostruct(input map[string]interface{}) (string, error) {
 	results := ``
 	for k, v := range input {
 		// TODO look for _ or - and remove them while Capitalizing next letter
-		key := fmt.Sprintf("%s", keyHandler(k, false))
-		value := fmt.Sprintf("%s", reflect.TypeOf(v))
+		key := keyHandler(k, false)
+		value := reflect.TypeOf(v).String()
 		data := map[string]interface{}{"Key": key, "Type": value}
 		s, err := maketmpl(data, tmpl)
 		if err != nil {
@@ -164,10 +164,7 @@ func format(src []byte) ([]byte, error) {
 	if err := cfg.Fprint(&buf, fset, file); err != nil {
 		return empty, err
 	}
-	sourceAdj := func(src []byte, indent int) []byte {
-		return bytes.TrimSpace(src)
-	}
-	out := sourceAdj(buf.Bytes(), cfg.Indent)
+	out := bytes.TrimSpace(buf.Bytes())
 	if len(out) == 0 {
 		return src, nil
 	}
@@ -178,19 +175,18 @@ func format(src []byte) ([]byte, error) {
 	}
 
 	return append(res, src[i:]...), nil
-
 }
 
 func inspector(raw []byte) (string, error) {
 	var output map[string]interface{}
 	isjson := IsJSON(raw)
-	if isjson != true {
-		err := yaml.Unmarshal([]byte(raw), &output)
+	if !isjson {
+		err := yaml.Unmarshal(raw, &output)
 		if err != nil {
 			return begin + end, err
 		}
 	} else {
-		err := json.Unmarshal([]byte(raw), &output)
+		err := json.Unmarshal(raw, &output)
 		if err != nil {
 			return begin + end, err
 		}
@@ -207,7 +203,6 @@ func inspector(raw []byte) (string, error) {
 			s, _ := tostruct(T)
 			results = results + b + pad + s + pad + end
 		}
-
 	}
 	code := begin + results + end
 	final, err := format([]byte(code))
@@ -226,7 +221,6 @@ var inspectCmd = &cobra.Command{
 }
 
 func inspectRunCmd(cmd *cobra.Command, args []string) {
-
 	if len(args) > 0 {
 		for _, filepath := range args {
 			raw, err := ioutil.ReadFile(filepath)

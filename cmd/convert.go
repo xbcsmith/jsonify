@@ -42,7 +42,7 @@ func IsJSON(buf []byte) bool {
 
 func json2yaml(raw []byte) ([]byte, error) {
 	var output interface{}
-	if err := json.Unmarshal([]byte(raw), &output); err != nil {
+	if err := json.Unmarshal(raw, &output); err != nil {
 		return nil, err
 	}
 
@@ -73,12 +73,11 @@ func yaml2json(raw []byte, noindent bool) ([]byte, error) {
 		return nil, fmt.Errorf("failed to convert to yaml : %v", err)
 	}
 	return content, nil
-
 }
 
 func converter(raw []byte, noindent bool) ([]byte, error) {
 	isjson := IsJSON(raw)
-	if isjson != true {
+	if !isjson {
 		output, err := yaml2json(raw, noindent)
 		if err != nil {
 			fmt.Printf("decode data: %v", err)
@@ -139,7 +138,6 @@ func convertRunCmd(cmd *cobra.Command, args []string) {
 		fmt.Printf("%s", output)
 	}
 	os.Exit(0)
-
 }
 
 func init() {
