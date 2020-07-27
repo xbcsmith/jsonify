@@ -1,18 +1,7 @@
-// Copyright © 2016 Brett Smith <bc.smith@sas.com>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: 2020 Brett Smith <xbcsmith@gmail.com>
+// SPDX-License-Identifier: Apache-2.0
 
-package cmd
+package jsonify
 
 import (
 	"encoding/json"
@@ -139,7 +128,7 @@ func TestPathFinderJson(t *testing.T) {
 	tests := NewTests()
 	path := `$.baz.caz`
 	expected := `fuz`
-	actual, err := pathfinder(tests.a, path)
+	actual, err := PathFinder(tests.a, path)
 	assert.Assert(t, is.Nil(err))
 	assert.Equal(t, expected, actual)
 }
@@ -148,7 +137,7 @@ func TestPathFinderYaml(t *testing.T) {
 	tests := NewTests()
 	path := `$.baz.caz`
 	expected := `fuz`
-	actual, err := pathfinder(tests.b, path)
+	actual, err := PathFinder(tests.b, path)
 	assert.Assert(t, is.Nil(err))
 	assert.Equal(t, expected, actual)
 }
@@ -156,7 +145,7 @@ func TestPathFinderYaml(t *testing.T) {
 func TestPathFinderJsonMissing(t *testing.T) {
 	tests := NewTests()
 	path := `$.foo.bar`
-	actual, err := pathfinder(tests.a, path)
+	actual, err := PathFinder(tests.a, path)
 	assert.Assert(t, is.Nil(actual))
 	assert.ErrorContains(t, err, "object is not map")
 }
@@ -164,7 +153,43 @@ func TestPathFinderJsonMissing(t *testing.T) {
 func TestPathFinderYamlMissing(t *testing.T) {
 	tests := NewTests()
 	path := `$.foo.bar`
-	actual, err := pathfinder(tests.b, path)
+	actual, err := PathFinder(tests.b, path)
 	assert.Assert(t, is.Nil(actual))
 	assert.ErrorContains(t, err, "object is not map")
+}
+
+func TestConverterJson(t *testing.T) {
+	tests := NewTests()
+	expected := `- key:`
+	actual, err := Converter(tests.a, false)
+	assert.Assert(t, is.Nil(err))
+	assert.Assert(t, !IsJSON(actual))
+	assert.Assert(t, is.Contains(string(actual), expected))
+}
+
+func TestConverterAlsoJson(t *testing.T) {
+	tests := NewTests()
+	expected := `brackets:`
+	actual, err := Converter(tests.e, false)
+	assert.Assert(t, is.Nil(err))
+	assert.Assert(t, !IsJSON(actual))
+	assert.Assert(t, is.Contains(string(actual), expected))
+}
+
+func TestConverterYaml(t *testing.T) {
+	tests := NewTests()
+	expected := `"bar": [`
+	actual, err := Converter(tests.b, false)
+	assert.Assert(t, is.Nil(err))
+	assert.Assert(t, IsJSON(actual))
+	assert.Assert(t, is.Contains(string(actual), expected))
+}
+
+func TestConverterYamlNoIndent(t *testing.T) {
+	tests := NewTests()
+	expected := `bar":[`
+	actual, err := Converter(tests.b, true)
+	assert.Assert(t, is.Nil(err))
+	assert.Assert(t, IsJSON(actual))
+	assert.Assert(t, is.Contains(string(actual), expected))
 }

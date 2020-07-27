@@ -7,11 +7,6 @@ echo
 echo '{"foo":"show_value_of_foo","bar": [ "buz", "cuz", "duz" ], "baz" : { "caz" : "fuz"}}' | $BINARY convert
 echo
 
-echo "Testing jsonify inspect"
-echo
-echo '{"flag": true, "foo": {"baz": [1, 2, 3]}, "list": ["one", 2, true, "4", {"key": "value"}, [1, "2", false]]}' | $BINARY inspect
-echo
-
 echo "Testing jsonify convert yaml to json"
 echo
 echo '---
